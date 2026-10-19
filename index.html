@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lab 4.1 graded activity: MapReduce</title>
+<meta name="description" content="Graded activity for Lab 4.1 Writing MapReduce Programs. Each student gets personal values from their roll number.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📝</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Ubuntu:ital,wght@0,300;0,400;0,500;0,700;1,400&family=Ubuntu+Mono:wght@400;700&display=swap" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+<style>
+:root{
+  --paper:#F2F4F6; --surface:#FFFFFF; --ink:#16202B; --muted:#58646F; --rule:#D3D9DF;
+  --signal:#0B6E69; --signal-soft:#DCEFEC; --danger:#B42318; --danger-soft:#FBE4E1; --ok:#2E7D32; --ok-soft:#E5F2E6;
+  --yarn:#7C3AED; --yarn-soft:#EFE7FD; --warn:#B7791F; --warn-soft:#FDF3DC;
+  --bs-body-bg:var(--paper); --bs-body-color:var(--ink); --bs-border-color:var(--rule);
+  --bs-body-font-family:'Ubuntu',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
+  --bs-font-monospace:'Ubuntu Mono',ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+}
+body{line-height:1.6}
+h1,h2,h3{font-weight:700;letter-spacing:-.01em;line-height:1.15}
+h1{font-size:clamp(1.8rem,4vw,2.8rem)} h2{font-size:1.45rem} h3{font-size:1.08rem}
+code{color:var(--ink);background:#E4E9EE;padding:.05em .3em;border-radius:3px;font-size:.98em}
+.muted{color:var(--muted)} .tnum{font-variant-numeric:tabular-nums}
+.btn{font-weight:500;border-radius:6px}
+.btn-ink{background:var(--ink);color:#fff;border:1px solid var(--ink)} .btn-ink:hover,.btn-ink:focus{background:#2A3744;color:#fff}
+.btn-line{background:#fff;color:var(--ink);border:1px solid var(--rule)} .btn-line:hover{border-color:var(--ink)}
+.btn:focus-visible,.form-control:focus,.form-select:focus{outline:3px solid var(--signal);outline-offset:1px;box-shadow:none;border-color:var(--signal)}
+.topnav{background:rgba(242,244,246,.95);backdrop-filter:blur(6px);border-bottom:1px solid var(--rule)}
+.brand{font-weight:700;color:var(--ink);text-decoration:none}
+.panel{background:#fff;border:1px solid var(--rule);border-radius:10px;padding:1.1rem 1.2rem}
+.panel-title{font-weight:700;margin-bottom:.5rem}
+.rules li{margin:.2rem 0}
+.bar{position:sticky;top:0;z-index:20;background:var(--ink);color:#fff;border-radius:0 0 10px 10px;padding:.5rem .9rem;display:flex;flex-wrap:wrap;gap:.4rem 1.2rem;align-items:center;font-size:.9rem}
+.bar .clock{font-weight:700;font-size:1.15rem;font-variant-numeric:tabular-nums}
+.bar .clock.low{color:#FF9B8F}
+.bar .prog{flex:1;min-width:140px;height:8px;background:#34414E;border-radius:4px;overflow:hidden}
+.bar .prog i{display:block;height:100%;background:#7EE2A8}
+.part{margin-top:1.6rem}
+.part-h{display:flex;justify-content:space-between;align-items:baseline;gap:.5rem;border-bottom:2px solid var(--ink);padding-bottom:.25rem;margin-bottom:.8rem}
+.part-h span{font-weight:700;color:var(--muted)}
+.task{background:#fff;border:1.5px solid var(--rule);border-radius:10px;padding:.9rem 1rem;margin-bottom:.8rem}
+.task.answered{border-color:#B9DCC0}
+.task-h{display:flex;justify-content:space-between;gap:.5rem;font-weight:700;margin-bottom:.35rem}
+.task-h .mk{font-weight:500;color:var(--muted);white-space:nowrap}
+.task p{margin-bottom:.45rem}
+.data{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:.5rem;margin:.3rem 0 .2rem}
+.data div{border:1.5px solid var(--rule);border-radius:7px;padding:.35rem .55rem;background:#FBFCFD}
+.data b{display:block;font-size:1.05rem;font-variant-numeric:tabular-nums}
+.data small{color:var(--muted)}
+.console{background:#101820;color:#D6DEE6;border-radius:10px;padding:.8rem .9rem;font-family:'Ubuntu Mono',monospace;font-size:.86rem;white-space:pre;overflow:auto;max-height:340px;margin-top:.6rem}
+.console .dim{color:#8193A3} .console .ok{color:#8EE6A3} .console .hi{color:#FFD479;font-weight:700}
+.runrow{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:.5rem;align-items:end}
+.runs{width:100%;font-size:.85rem;border-collapse:collapse;margin-top:.6rem}
+.runs th{border-bottom:2px solid var(--ink);padding:.2rem .35rem;text-align:left}
+.runs td{border-bottom:1px dashed var(--rule);padding:.25rem .35rem}
+.check{display:inline-block;font-size:.78rem;font-weight:700;border-radius:4px;padding:0 6px}
+.check.yes{background:var(--ok-soft);color:var(--ok)} .check.no{background:#ECEFF2;color:var(--muted)}
+.mcq label{display:block;border:1.5px solid var(--rule);border-radius:7px;padding:.35rem .6rem;margin:.3rem 0;cursor:pointer;background:#fff}
+.mcq input{margin-right:.5rem}
+.mcq label:has(input:checked){border-color:var(--signal);background:var(--signal-soft)}
+.inline-in{max-width:260px}
+.result{border:2px solid var(--ink);border-radius:12px;background:#fff;padding:1.2rem 1.3rem}
+.score{font-size:3rem;font-weight:700;line-height:1;font-variant-numeric:tabular-nums}
+.breakdown{width:100%;font-size:.9rem;border-collapse:collapse}
+.breakdown td,.breakdown th{border-bottom:1px dashed var(--rule);padding:.3rem .4rem;text-align:left}
+.breakdown td.r{text-align:right;font-variant-numeric:tabular-nums}
+.code-out{font-family:'Ubuntu Mono',monospace;font-size:.82rem;word-break:break-all;background:#F7F9FA;border:1px solid var(--rule);border-radius:7px;padding:.5rem .6rem;max-height:120px;overflow:auto}
+.warnbox{border-left:4px solid var(--warn);background:var(--warn-soft);padding:.5rem .8rem;border-radius:0 8px 8px 0}
+.vt{width:100%;font-size:.88rem;border-collapse:collapse;background:#fff}
+.vt th{border-bottom:2px solid var(--ink);padding:.3rem .4rem;text-align:left}
+.vt td{border-bottom:1px dashed var(--rule);padding:.3rem .4rem;vertical-align:top}
+.bad{color:var(--danger);font-weight:700}
+@media print{ .topnav,.no-print{display:none!important} body{background:#fff} .result{border:1px solid #000} }
+</style>
+</head>
+<body>
+<nav class="topnav no-print">
+  <div class="container d-flex justify-content-between align-items-center py-2 flex-wrap gap-2">
+    <a class="brand" href="index.html">← MapReduce simulator</a>
+    <span class="muted">Lab 4.1 graded activity</span>
+  </div>
+</nav>
+
+<main class="container pb-5" id="app"></main>
+
+<script>
+(function(){
+"use strict";
+const $=(s,r=document)=>r.querySelector(s);
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const fmt=x=>Number(x).toLocaleString('en-US');
+const DURATION=40*60*1000;
+const STORE='mr41_activity';
+
+/* ---------- personal values, derived only from the roll number ---------- */
+function hash32(str){ let h=0x811c9dc5; for(const ch of str){ h^=ch.charCodeAt(0); h=Math.imul(h,0x01000193); } return h>>>0; }
+function rng(seed){ let a=seed>>>0; return ()=>{ a|=0; a=a+0x6D2B79F5|0; let t=Math.imul(a^a>>>15,1|a); t=t+Math.imul(t^t>>>7,61|t)^t; return ((t^t>>>14)>>>0)/4294967296; }; }
+const normRoll=r=>String(r||'').trim().toUpperCase().replace(/\s+/g,'');
+function params(roll){
+  const r=rng(hash32('mr41|'+normRoll(roll))), pick=a=>a[Math.floor(r()*a.length)], int=(a,b)=>a+Math.floor(r()*(b-a+1));
+  const N=int(1200,2600)*1000+int(0,999), H=pick([120,150,160,180,200,240,250]);
+  const bytes=N*170+int(0,N*3), M=Math.ceil(bytes/134217728);
+  const R=int(3,6), Sb=pick([20,25,30,40,50]);
+  const hot=int(0,H-1), share=int(50,75), N2=int(800,1200)*1000+int(0,999);
+  const variant=int(0,3);
+  const tens=[10,20,30,40,50,60,70,80,90]; let a1,a2,b1; do{ a1=pick(tens); a2=pick(tens); b1=pick(tens); } while(Math.abs(((a1+a2)/2+b1)/2-(a1+a2+b1)/3)<1);
+  const hosts=[int(0,H-1),int(0,H-1),int(0,H-1)];
+  return {N,H,bytes,M,R,Sb,hot,share,N2,variant,a1,a2,b1,hosts};
+}
+const hn=i=>'host'+String(i).padStart(3,'0');
+function textHash(s){ let h=1; for(const ch of s){ h=(Math.imul(31,h)+ch.charCodeAt(0))|0; } return h; }
+const hashPart=(host,R)=>((textHash(host)&0x7fffffff)%R);
+const rangePart=(i,Sb,R)=>Math.floor(i/Sb)%R;
+
+/* ---------- the counter model (same rules as the simulator) ---------- */
+function runModel(P,cfg){
+  const ev=cfg.input==='events', N=ev?P.N:P.N2, M=ev?P.M:1, H=P.H, R=cfg.R;
+  const comb=cfg.comb, toShuffle=comb?M*H:N, mat=toShuffle*18+M*R*6;
+  const per=Array(R).fill(0);
+  const hostRecs=i=>{ if(ev) return N/H; const other=N*(100-P.share)/100/H; return other+(i===P.hot?N*P.share/100:0); };
+  for(let i=0;i<H;i++){ const r=cfg.part==='range'?rangePart(i,P.Sb,R):hashPart(hn(i),R); per[r]+=comb?M:hostRecs(i); }
+  const perR=per.map(x=>Math.round(x));
+  const secs=perR.map(x=>Math.max(3,Math.round(3+x/(ev?120000:38000))));
+  return {N,M,R,H,mapOut:N,mapBytes:N*16,combIn:comb?N:0,combOut:comb?M*H:0,mat,groups:H,spilled:2*toShuffle,perR,secs,inBytes:ev?P.bytes:P.N2*37};
+}
+function counterText(m,cfg){
+  return [`Job completed successfully`,`Counters: 54`,`\tJob Counters`,`\t\tLaunched map tasks=${m.M}`,`\t\tLaunched reduce tasks=${m.R}`,`\tMap-Reduce Framework`,`\t\tMap input records=${m.N}`,`\t\tMap output records=${m.mapOut}`,`\t\tMap output bytes=${m.mapBytes}`,`\t\tMap output materialized bytes=${m.mat}`,`\t\tCombine input records=${m.combIn}`,`\t\tCombine output records=${m.combOut}`,`\t\tReduce input groups=${m.groups}`,`\t\tReduce shuffle bytes=${m.mat}`,`\t\tReduce input records=${cfg.comb?m.combOut:m.mapOut}`,`\t\tReduce output records=${m.groups}`,`\t\tSpilled Records=${m.spilled}`,`\tFile Input Format Counters`,`\t\tBytes Read=${m.inBytes}`,``,`Reduce task summary (from the job history):`,...m.perR.map((x,i)=>`\treduce ${i}: ${x} records in, ${m.secs[i]} s`),``,`Output: ${m.R} part file${m.R>1?'s':''} (${[...Array(m.R)].map((_,i)=>'part-r-'+String(i).padStart(5,'0')).join(', ')})`].join('\n');
+}
+
+/* ---------- answer key and scoring ---------- */
+const VARIANTS=[
+  {job:'total bytes sent by each host',types:['LongWritable','Text','Text','LongWritable']},
+  {job:'number of events for each action (counts fit easily in an int)',types:['LongWritable','Text','Text','IntWritable']},
+  {job:'largest single bytes value seen for each src_ip',types:['LongWritable','Text','Text','LongWritable']},
+  {job:'number of failed logins in each hour of the day, where the hour (0 to 23) is the key and counts fit in an int',types:['LongWritable','Text','IntWritable','IntWritable']}
+];
+const TYPE_OPTS=['LongWritable','IntWritable','Text','DoubleWritable'];
+function expected(P){
+  const base=runModel(P,{input:'events',R:1,comb:false,part:'hash'}), comb=runModel(P,{input:'events',R:1,comb:true,part:'hash'});
+  const wrong=((P.a1+P.a2)/2+P.b1)/2, right=(P.a1+P.a2+P.b1)/3;
+  return {B1:P.N,B2:P.M,B3:base.mat,B4:comb.mat,B5:+((1-comb.mat/base.mat)*100).toFixed(2),B6:P.R,
+    C1:VARIANTS[P.variant].types,C2w:wrong,C2r:right,C2f:'b',C3:P.hosts.map(i=>rangePart(i,P.Sb,P.R)),C4:rangePart(P.hot,P.Sb,P.R),C4b:'b',C5a:'c',C5b:'b'};
+}
+const REQ={A1:{input:'events',R:1,comb:false,part:'hash'},A2:{input:'events',R:1,comb:true,part:'hash'},A3:(P)=>({input:'skew',R:P.R,comb:false,part:'range'}),A4:(P)=>({input:'events',R:P.R,comb:true,part:'hash'})};
+const sameCfg=(a,b)=>a.input===b.input&&+a.R===+b.R&&!!a.comb===!!b.comb&&a.part===b.part;
+const num=v=>{ const x=parseFloat(String(v==null?'':v).replace(/,/g,'').trim()); return isNaN(x)?null:x; };
+function score(roll,ans,runs){
+  const P=params(roll), E=expected(P), rows=[];
+  const add=(id,label,max,got)=>rows.push({id,label,max,got:Math.min(max,got)});
+  const ran=c=>(runs||[]).some(r=>sameCfg(r,c));
+  add('A1','Baseline run performed',1,ran(REQ.A1)?1:0);
+  add('A2','Combiner run performed',1,ran(REQ.A2)?1:0);
+  add('A3','Skew run performed (correct settings)',1,ran(REQ.A3(P))?1:0);
+  add('A4','Multi-reducer run performed',1,ran(REQ.A4(P))?1:0);
+  add('B1','Map input records',1,num(ans.B1)===E.B1?1:0);
+  add('B2','Number of map tasks',1,num(ans.B2)===E.B2?1:0);
+  add('B3','Shuffle bytes, no combiner',1,num(ans.B3)===E.B3?1:0);
+  add('B4','Shuffle bytes, with combiner',1,num(ans.B4)===E.B4?1:0);
+  add('B5','Shuffle reduction %',1,num(ans.B5)!==null&&Math.abs(num(ans.B5)-E.B5)<=0.05?1:0);
+  add('B6','Part files with your reducer count',1,num(ans.B6)===E.B6?1:0);
+  add('C1','Mapper type parameters',2,[0,1,2,3].reduce((s,i)=>s+((ans['C1_'+i]||'')===E.C1[i]?0.5:0),0));
+  add('C2','Average with a combiner',3,(num(ans.C2w)!==null&&Math.abs(num(ans.C2w)-E.C2w)<0.01?1:0)+(num(ans.C2r)!==null&&Math.abs(num(ans.C2r)-E.C2r)<0.01?1:0)+(ans.C2f===E.C2f?1:0));
+  add('C3','Custom partitioner placement',1.5,[0,1,2].reduce((s,i)=>s+(num(ans['C3_'+i])===E.C3[i]?0.5:0),0));
+  add('C4','Skew diagnosis',1.5,(num(ans.C4)===E.C4?1:0)+(ans.C4b===E.C4b?0.5:0));
+  add('C5','Concepts',2,(ans.C5a===E.C5a?1:0)+(ans.C5b===E.C5b?1:0));
+  const total=rows.reduce((s,r)=>s+r.got,0);
+  return {rows,total,max:20,E,P};
+}
+
+/* ---------- result codes ---------- */
+const b64e=s=>btoa(unescape(encodeURIComponent(s)));
+const b64d=s=>decodeURIComponent(escape(atob(s)));
+function makeCode(st){ const body={v:1,n:st.name,r:normRoll(st.roll),t0:st.t0,t1:st.t1,att:st.attempt,runs:st.runs.map(r=>[r.input,r.R,r.comb?1:0,r.part]),a:st.ans}; const json=JSON.stringify(body); return 'MR41-'+b64e(json)+'-'+hash32(json).toString(36); }
+function readCode(code){ const m=String(code).trim().match(/^MR41-([A-Za-z0-9+/=]+)-([0-9a-z]+)$/); if(!m) throw new Error('not a Lab 4.1 result code'); let json; try{ json=b64d(m[1]); }catch(e){ throw new Error('the code has been changed or is incomplete'); } if(hash32(json).toString(36)!==m[2]) throw new Error('the code has been changed or is incomplete'); const b=JSON.parse(json); b.runs=(b.runs||[]).map(x=>({input:x[0],R:x[1],comb:!!x[2],part:x[3]})); return b; }
+
+/* ---------- state ---------- */
+let st=null, tick=null;
+function save(){ try{ localStorage.setItem(STORE,JSON.stringify(st)); }catch(e){} }
+function load(){ try{ return JSON.parse(localStorage.getItem(STORE)||'null'); }catch(e){ return null; } }
+
+/* ---------- views ---------- */
+function viewStart(prev){
+  $('#app').innerHTML=`
+  <div class="row g-4 mt-2">
+    <div class="col-lg-7">
+      <h1 class="mt-3">Lab 4.1 graded activity: MapReduce</h1>
+      <p class="lead mt-2">You will run jobs on <strong>your own dataset</strong>, read the counters, and answer questions about combiners, partitioners and skew. The numbers are different for every roll number, so your answers will not match anyone else's.</p>
+      <div class="panel mt-3"><div class="panel-title">Rules</div><ul class="rules mb-0">
+        <li>Individual work. Total <strong>20 marks</strong>, time limit <strong>40 minutes</strong>.</li>
+        <li>You may open the <a href="index.html">MapReduce simulator</a> and your lab notes.</li>
+        <li>Your progress is saved in this browser. If the page reloads, open it again on the same device.</li>
+        <li>When time runs out, the activity is submitted automatically.</li>
+        <li>At the end you get a <strong>result code</strong>. Send it to your teacher exactly as shown; that is how you are marked.</li>
+      </ul></div>
+    </div>
+    <div class="col-lg-5">
+      <div class="panel mt-lg-5">
+        ${prev?`<div class="warnbox mb-3">This browser already has a submitted attempt for <strong>${esc(prev.name)} (${esc(prev.roll)})</strong>. <a href="#" id="showPrev">Show that result</a>. Starting again creates attempt ${prev.attempt+1}, and your teacher will see the attempt number.</div>`:''}
+        <div class="panel-title">Start</div>
+        <label class="form-label" for="nm">Full name</label>
+        <input class="form-control mb-2" id="nm" autocomplete="name" placeholder="e.g. Muhammad Fazil">
+        <label class="form-label" for="rl">Roll number</label>
+        <input class="form-control mb-1" id="rl" placeholder="e.g. 22BSCYS018" autocomplete="off">
+        <div class="form-text mb-2">Type it exactly as on the class list. It decides your personal values.</div>
+        <div class="form-check mb-3"><input class="form-check-input" type="checkbox" id="own"><label class="form-check-label" for="own">I will complete this activity on my own.</label></div>
+        <div class="text-danger small mb-2" id="err" role="alert"></div>
+        <button class="btn btn-ink w-100 py-2" id="go">Start the activity</button>
+      </div>
+    </div>
+  </div>
+  <p class="mt-4 small muted">Teacher? <a href="#verify">Verify result codes</a>.</p>`;
+  if(prev) $('#showPrev').addEventListener('click',e=>{ e.preventDefault(); st=prev; viewResult(); });
+  $('#go').addEventListener('click',()=>{
+    const name=$('#nm').value.trim(), roll=normRoll($('#rl').value);
+    if(name.length<3){ $('#err').textContent='Please enter your full name.'; return; }
+    if(!/^[0-9]{2}[A-Z]{2,8}[0-9]{2,4}$/.test(roll)){ $('#err').textContent='Please enter your roll number in the class format, for example 22BSCYS018.'; return; }
+    if(!$('#own').checked){ $('#err').textContent='Please confirm you will work on your own.'; return; }
+    st={name,roll,t0:Date.now(),t1:null,attempt:prev?prev.attempt+1:1,runs:[],ans:{},log:'',submitted:false};
+    save(); viewActivity();
+  });
+}
+
+function viewActivity(){
+  const P=params(st.roll), V=VARIANTS[P.variant];
+  const rr=rng(hash32('order|'+normRoll(st.roll)));
+  const shuffle=a=>{ const x=a.slice(); for(let i=x.length-1;i>0;i--){ const j=Math.floor(rr()*(i+1)); [x[i],x[j]]=[x[j],x[i]]; } return x; };
+  const radios=(name,opts)=>`<div class="mcq">${shuffle(opts).map(([v,t])=>`<label><input type="radio" name="${name}" value="${v}" ${st.ans[name]===v?'checked':''}>${t}</label>`).join('')}</div>`;
+  const inp=(id,ph)=>`<input class="form-control inline-in tnum" data-a="${id}" value="${esc(st.ans[id]||'')}" placeholder="${ph||'your answer'}" inputmode="decimal">`;
+  $('#app').innerHTML=`
+  <div class="bar no-print"><span><strong>${esc(st.name)}</strong> · ${esc(st.roll)}${st.attempt>1?' · attempt '+st.attempt:''}</span><span class="clock" id="clock">40:00</span><div class="prog" title="answered"><i id="prog" style="width:0%"></i></div><button class="btn btn-sm btn-light" id="submitTop">Submit</button></div>
+
+  <div class="part"><div class="part-h"><h2 class="mb-0">Your dataset</h2><span>values unique to ${esc(st.roll)}</span></div>
+    <div class="data">
+      <div><small>events_${esc(st.roll.toLowerCase())}.json</small><b>${fmt(P.N)} lines</b><small>${(P.bytes/1048576).toFixed(1)} MB in HDFS</small></div>
+      <div><small>Distinct hosts</small><b>${P.H}</b><small>host000 to ${hn(P.H-1)}</small></div>
+      <div><small>Your reducer count R</small><b>${P.R}</b><small>use it where a task says R</small></div>
+      <div><small>skewed_${esc(st.roll.toLowerCase())}.json</small><b>${fmt(P.N2)} lines</b><small>${hn(P.hot)} has ${P.share}% of them</small></div>
+      <div><small>Your range partitioner</small><b>(n / ${P.Sb}) % R</b><small>n = the number in the host name</small></div>
+    </div>
+    <p class="small muted mb-0">The mapper is the fixed one from the lab (it emits one (host, bytes) pair per line, no malformed lines). HDFS block size is 128 MB.</p>
+  </div>
+
+  <div class="part"><div class="part-h"><h2 class="mb-0">Part A: perform the runs</h2><span>4 marks</span></div>
+    <div class="task"><p class="mb-2">Use the job console to perform these four runs. Each one is marked automatically when you run it with exactly these settings.</p>
+      <table class="runs"><tr><th>Task</th><th>Input</th><th>Reducers</th><th>Combiner</th><th>Partitioner</th><th>Done</th></tr>
+        ${[['A1','events','1','off','hash'],['A2','events','1','on','hash'],['A3','skewed',String(P.R),'off',`range (n / ${P.Sb})`],['A4','events',String(P.R),'on','hash']].map(r=>`<tr><td><b>${r[0]}</b></td><td>${r[1]}</td><td>${r[2]}</td><td>${r[3]}</td><td>${r[4]}</td><td><span class="check no" id="ck${r[0]}">not yet</span></td></tr>`).join('')}
+      </table>
+    </div>
+    <div class="task">
+      <div class="task-h">Job console <span class="mk">hadoop jar hostbytes.jar HostBytesDriver …</span></div>
+      <div class="runrow">
+        <div><label class="form-label small" for="cIn">Input</label><select class="form-select" id="cIn"><option value="events">events (${fmt(P.N)} lines)</option><option value="skew">skewed (${fmt(P.N2)} lines)</option></select></div>
+        <div><label class="form-label small" for="cR">Reducers</label><input class="form-control" type="number" id="cR" min="1" max="8" value="1"></div>
+        <div><label class="form-label small" for="cC">Combiner</label><select class="form-select" id="cC"><option value="0">off</option><option value="1">on</option></select></div>
+        <div><label class="form-label small" for="cP">Partitioner</label><select class="form-select" id="cP"><option value="hash">hash (default)</option><option value="range">range (n / ${P.Sb}) % R</option></select></div>
+        <div><button class="btn btn-ink w-100" id="cRun">Run job</button></div>
+      </div>
+      <div class="console" id="console" aria-live="polite">${st.log||'<span class="dim">Output appears here. Each run prints its counters and a reduce task summary.</span>'}</div>
+    </div>
+  </div>
+
+  <div class="part"><div class="part-h"><h2 class="mb-0">Part B: read the counters</h2><span>6 marks</span></div>
+    <div class="task"><div class="task-h">B1 <span class="mk">1 mark</span></div><p>From your A1 run: what is <code>Map input records</code>?</p>${inp('B1')}</div>
+    <div class="task"><div class="task-h">B2 <span class="mk">1 mark</span></div><p>How many map tasks ran on your events file, and why that number? Enter the number.</p>${inp('B2')}</div>
+    <div class="task"><div class="task-h">B3 <span class="mk">1 mark</span></div><p>From A1: <code>Reduce shuffle bytes</code> without a combiner.</p>${inp('B3')}</div>
+    <div class="task"><div class="task-h">B4 <span class="mk">1 mark</span></div><p>From A2: <code>Reduce shuffle bytes</code> with the combiner.</p>${inp('B4')}</div>
+    <div class="task"><div class="task-h">B5 <span class="mk">1 mark</span></div><p>Calculate the reduction in shuffle bytes as a percentage, to two decimal places: (1 − B4 ÷ B3) × 100.</p>${inp('B5','e.g. 98.76')}</div>
+    <div class="task"><div class="task-h">B6 <span class="mk">1 mark</span></div><p>How many part files did your A4 run write?</p>${inp('B6')}</div>
+  </div>
+
+  <div class="part"><div class="part-h"><h2 class="mb-0">Part C: reason it out</h2><span>10 marks</span></div>
+    <div class="task"><div class="task-h">C1 <span class="mk">2 marks</span></div><p>You must write a mapper that computes the <strong>${V.job}</strong> from the events file. Choose its four type parameters.</p>
+      <div class="d-flex flex-wrap gap-2 align-items-center"><code>Mapper&lt;</code>${[0,1,2,3].map(i=>`<select class="form-select form-select-sm" style="width:auto" data-a="C1_${i}"><option value="">choose…</option>${TYPE_OPTS.map(t=>`<option ${st.ans['C1_'+i]===t?'selected':''}>${t}</option>`).join('')}</select>${i<3?',':''}`).join('')}<code>&gt;</code></div></div>
+    <div class="task"><div class="task-h">C2 <span class="mk">3 marks</span></div><p>Someone uses a combiner to compute the <em>average</em> bytes per host. For one host, mapper A emits <strong>${P.a1}</strong> and <strong>${P.a2}</strong>; mapper B emits <strong>${P.b1}</strong>. Each combiner averages its own values, and the reducer averages what it receives.</p>
+      <div class="row g-2"><div class="col-sm-6"><label class="form-label small">Average the reducer outputs (up to 2 decimals)</label>${inp('C2w')}</div><div class="col-sm-6"><label class="form-label small">The true average (up to 2 decimals)</label>${inp('C2r')}</div></div>
+      <p class="mt-2 mb-1">Which change makes a combiner safe for an average?</p>${radios('C2f',[['a','Use more reducers so each average is computed on less data'],['b','Emit (sum, count) pairs, add them in the combiner, and divide only in the reducer'],['c','Turn on the combiner only when every mapper has the same number of records'],['d','Sort the values before averaging them']])}</div>
+    <div class="task"><div class="task-h">C3 <span class="mk">1.5 marks</span></div><p>With your range partitioner <code>(n / ${P.Sb}) % ${P.R}</code> and R = ${P.R}, which reducer receives each host? (Integer division.)</p>
+      <div class="row g-2">${P.hosts.map((h,i)=>`<div class="col-sm-4"><label class="form-label small">${hn(h)} goes to reducer</label>${inp('C3_'+i)}</div>`).join('')}</div></div>
+    <div class="task"><div class="task-h">C4 <span class="mk">1.5 marks</span></div><p>In your A3 run, which reducer number took the longest?</p>${inp('C4')}
+      <p class="mt-2 mb-1">If you ran A3 again with twice as many reducers, would that slow reducer become fast?</p>${radios('C4b',[['a','Yes: twice the reducers means each one gets half of every key\'s records'],['b',`No: every record for ${hn(P.hot)} still goes to a single reducer, so that reducer stays overloaded`],['c','Yes, but only if the combiner is also turned off']])}</div>
+    <div class="task"><div class="task-h">C5 <span class="mk">2 marks</span></div><p>A job shows <code>Spilled Records</code> much larger than <code>Map output records</code>. What does that indicate?</p>${radios('C5a',[['a','Some input lines were malformed'],['b','The combiner ran too many times'],['c','Records were written to disk more than once because the in-memory sort buffer was too small'],['d','The partitioner sent records to the wrong reducer']])}
+      <p class="mt-2 mb-1">A job with 4 reducers writes 4 part files. Which statement is true?</p>${radios('C5b',[['a','The four files together form one list sorted by key'],['b','Each file is sorted by key, but the files together are not one sorted list'],['c','None of the files is sorted'],['d','The files are sorted by value']])}</div>
+  </div>
+  <div class="text-center my-4 no-print"><button class="btn btn-ink btn-lg px-5" id="submitBottom">Submit my answers</button></div>`;
+
+  // wiring
+  document.querySelectorAll('[data-a]').forEach(el=>el.addEventListener('input',()=>{ st.ans[el.dataset.a]=el.value; save(); progress(); }));
+  document.querySelectorAll('.mcq input').forEach(el=>el.addEventListener('change',()=>{ st.ans[el.name]=el.value; save(); progress(); }));
+  $('#cRun').addEventListener('click',()=>{
+    const cfg={input:$('#cIn').value,R:Math.max(1,Math.min(8,parseInt($('#cR').value)||1)),comb:$('#cC').value==='1',part:$('#cP').value};
+    const m=runModel(P,cfg);
+    const head=`<span class="hi">$ hadoop jar hostbytes.jar HostBytesDriver ${cfg.input==='events'?'events':'skewed'}_${st.roll.toLowerCase()}.json out-${st.runs.length+1} ${cfg.R} ${cfg.comb} ${cfg.part==='range'?'(range partitioner)':''}</span>`;
+    st.log=(st.runs.length?st.log+'\n\n':'')+head+'\n'+esc(counterText(m,cfg));
+    st.runs.push(cfg); save();
+    const c=$('#console'); c.innerHTML=st.log; c.scrollTop=c.scrollHeight; marks();
+  });
+  ['#submitTop','#submitBottom'].forEach(s=>$(s).addEventListener('click',()=>{ if(confirm('Submit now? You cannot change your answers afterwards.')) submit(); }));
+  marks(); progress(); startClock();
+  const c=$('#console'); c.scrollTop=c.scrollHeight;
+}
+function marks(){ const P=params(st.roll); [['A1',REQ.A1],['A2',REQ.A2],['A3',REQ.A3(P)],['A4',REQ.A4(P)]].forEach(([k,c])=>{ const ok=st.runs.some(r=>sameCfg(r,c)); const el=$('#ck'+k); if(el){ el.className='check '+(ok?'yes':'no'); el.textContent=ok?'done':'not yet'; } }); }
+function progress(){ const keys=['B1','B2','B3','B4','B5','B6','C1_0','C1_1','C1_2','C1_3','C2w','C2r','C2f','C3_0','C3_1','C3_2','C4','C4b','C5a','C5b']; const n=keys.filter(k=>String(st.ans[k]||'').trim()).length; const p=$('#prog'); if(p) p.style.width=(n/keys.length*100)+'%'; }
+function startClock(){ clearInterval(tick); const upd=()=>{ const left=st.t0+DURATION-Date.now(); const el=$('#clock'); if(!el) return; if(left<=0){ clearInterval(tick); el.textContent='00:00'; submit(true); return; } const m=Math.floor(left/60000), s=Math.floor(left%60000/1000); el.textContent=String(m).padStart(2,'0')+':'+String(s).padStart(2,'0'); el.classList.toggle('low',left<5*60000); }; upd(); tick=setInterval(upd,1000); }
+function submit(auto){ clearInterval(tick); st.t1=Math.min(Date.now(),st.t0+DURATION); st.submitted=true; st.auto=!!auto; save(); viewResult(); window.scrollTo(0,0); }
+
+function viewResult(){
+  const sc=score(st.roll,st.ans,st.runs), code=makeCode(st), mins=Math.round((st.t1-st.t0)/60000);
+  $('#app').innerHTML=`
+  <div class="result mt-4">
+    <div class="d-flex flex-wrap justify-content-between gap-3 align-items-start">
+      <div><div class="muted">Lab 4.1 graded activity: MapReduce</div><h2 class="mt-1 mb-0">${esc(st.name)}</h2><div class="muted">${esc(normRoll(st.roll))}${st.attempt>1?' · attempt '+st.attempt:''} · submitted ${new Date(st.t1).toLocaleString()} · ${mins} min${st.auto?' · auto-submitted at the time limit':''}</div></div>
+      <div class="text-end"><div class="score">${sc.total} / 20</div><div class="muted">${Math.round(sc.total/20*100)}%</div></div>
+    </div>
+    <table class="breakdown mt-3"><tr><th>Item</th><th class="r">Marks</th></tr>${sc.rows.map(r=>`<tr><td>${r.id}. ${r.label}</td><td class="r">${r.got} / ${r.max}</td></tr>`).join('')}</table>
+    <div class="mt-3"><div class="panel-title mb-1">Your result code</div><div class="code-out" id="code">${code}</div>
+      <div class="d-flex flex-wrap gap-2 mt-2 no-print"><button class="btn btn-ink" id="copy">Copy result code</button><button class="btn btn-line" onclick="window.print()">Print or save as PDF</button></div>
+      <p class="small muted mt-2 mb-0">Send this code to your teacher exactly as shown. It contains your answers and runs; your teacher re-checks the marks from it.</p></div>
+  </div>
+  <p class="small muted mt-3 no-print">Correct answers are not shown here, so classmates with different roll numbers cannot copy them. Your teacher will discuss them in class.</p>`;
+  $('#copy').addEventListener('click',async()=>{ try{ await navigator.clipboard.writeText(code); $('#copy').textContent='Copied'; }catch(e){ const r=document.createRange(); r.selectNodeContents($('#code')); const s=getSelection(); s.removeAllRanges(); s.addRange(r); $('#copy').textContent='Selected: press Ctrl+C'; } });
+}
+
+/* ---------- teacher view ---------- */
+function viewVerify(){
+  $('#app').innerHTML=`<h1 class="mt-4">Verify result codes</h1>
+  <p class="muted">Paste one or more result codes, one per line. Each is decoded and marked again from the student's roll number, answers and runs, so an edited score cannot pass. A code that was altered or cut short is flagged.</p>
+  <textarea class="form-control" id="codes" rows="7" placeholder="MR41-…"></textarea>
+  <div class="d-flex gap-2 mt-2"><button class="btn btn-ink" id="check">Check codes</button><button class="btn btn-line" id="csv" disabled>Copy results as CSV</button><a class="btn btn-line" href="activity.html">Back to the activity</a></div>
+  <div id="vout" class="mt-3"></div>`;
+  let last=[];
+  $('#check').addEventListener('click',()=>{
+    const lines=$('#codes').value.split(/\s+/).map(s=>s.trim()).filter(Boolean); last=[];
+    const rows=lines.map((c,i)=>{ try{ const b=readCode(c); const sc=score(b.r,b.a,b.runs); const mins=b.t1&&b.t0?Math.round((b.t1-b.t0)/60000):''; const over=b.t1-b.t0>DURATION+60000; const rec={name:b.n,roll:b.r,score:sc.total,attempt:b.att,mins,submitted:b.t1?new Date(b.t1).toLocaleString():''}; last.push(rec);
+        return `<tr><td>${i+1}</td><td>${esc(b.n)}</td><td>${esc(b.r)}</td><td><b>${sc.total}</b> / 20</td><td>${b.att>1?'<span class="bad">'+b.att+'</span>':b.att}</td><td>${mins} min${over?' <span class="bad">over limit</span>':''}</td><td>${rec.submitted}</td><td class="small">${sc.rows.map(r=>`${r.id} ${r.got}/${r.max}`).join(', ')}</td></tr>`; }
+      catch(e){ return `<tr><td>${i+1}</td><td colspan="7" class="bad">Invalid code: ${esc(e.message)}</td></tr>`; } });
+    $('#vout').innerHTML=rows.length?`<div class="table-responsive"><table class="vt"><tr><th>#</th><th>Name</th><th>Roll</th><th>Score</th><th>Attempt</th><th>Time</th><th>Submitted</th><th>Breakdown</th></tr>${rows.join('')}</table></div>`:'';
+    $('#csv').disabled=!last.length;
+  });
+  $('#csv').addEventListener('click',async()=>{ const csv='Name,Roll,Score,Attempt,Minutes,Submitted\n'+last.map(r=>[r.name,r.roll,r.score,r.attempt,r.mins,r.submitted].map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(',')).join('\n'); try{ await navigator.clipboard.writeText(csv); $('#csv').textContent='CSV copied'; }catch(e){ alert(csv); } });
+}
+
+/* ---------- router ---------- */
+function route(){
+  if(location.hash==='#verify'){ clearInterval(tick); viewVerify(); return; }
+  const saved=load();
+  if(saved && !saved.submitted){ st=saved; if(Date.now()>st.t0+DURATION){ submit(true); return; } viewActivity(); return; }
+  viewStart(saved&&saved.submitted?saved:null);
+}
+window.addEventListener('hashchange',route);
+window.__act={params,expected,score,makeCode,readCode,runModel};
+route();
+})();
+</script>
+</body>
+</html>
